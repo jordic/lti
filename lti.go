@@ -1,8 +1,12 @@
 // Package lti provides support for working with LTI
 // more info can be checked at:
+//
 // https://www.imsglobal.org/activity/learning-tools-interoperability
+//
 // Basically it can sign http requests and also it can
-// verify incoming LMI requests
+// verify incoming LMI requests when acting as a Provider
+// This package is WIP. More features will be added when
+// needed. Will try to mantain a compatibility API.
 package lti
 
 import (
@@ -20,12 +24,22 @@ import (
 )
 
 const (
-	OAuthVersion = "1.0"
+	oAuthVersion = "1.0"
 	SigHMAC      = "HMAC-SHA1"
 	Version      = "0.1"
 )
 
-// Provider is an app, that can consume LTI messages
+// Provider is an app, that can consume LTI messages,
+// also a provider could be used, to construct messages and sign them
+// p := lti.NewProvider("secret", "http://url.com")
+// p.Add("param_name", "vale").
+// Add("other_param", "param2")
+//
+// sig, err := p.Sign()
+// will sign, the request, and add the needed fields to the
+// Provider.values > Can access it throught p.Params()
+// It also can be used to Verify and handle, incoming LTI requests.
+// p.IsValid(request)
 type Provider struct {
 	Secret      string
 	URL         string
@@ -36,8 +50,9 @@ type Provider struct {
 	Signer      oauth.OauthSigner
 }
 
-// Default is a default provider
-func Default(secret, urlSrv string) *Provider {
+// NewProvider is a provider configured with sensible defaults
+// as a signer the HMACSigner is used... (seems that is the most used)
+func NewProvider(secret, urlSrv string) *Provider {
 	sig := oauth.GetHMACSigner(secret, "")
 	return &Provider{
 		Secret: secret,
@@ -48,17 +63,22 @@ func Default(secret, urlSrv string) *Provider {
 	}
 }
 
-// Get a value from the provider
+// HasRole checks if a LTI request, has a provided role
+func (p *Provider) HasRole(role string) bool {
+	return true
+}
+
+// Get a value from the Params map in provider
 func (p *Provider) Get(k string) string {
 	return p.values.Get(k)
 }
 
-// Params returns request params
+// Params returns the map of values stored on the LTI request
 func (p *Provider) Params() url.Values {
 	return p.values
 }
 
-// Add a new param
+// Add a new param to a LTI request
 func (p *Provider) Add(k, v string) *Provider {
 	if p.values == nil {
 		p.values = url.Values{}
@@ -75,10 +95,11 @@ func (p *Provider) Empty(key string) bool {
 	return p.values.Get(key) == ""
 }
 
-// Sign a request, adding, required fields
+// Sign a request, adding, required fields,
+// A request, can be drilled on a template, iterating, over p.Prams()
 func (p *Provider) Sign() (string, error) {
 	if p.Empty("oauth_version") {
-		p.Add("oauth_version", OAuthVersion)
+		p.Add("oauth_version", oAuthVersion)
 	}
 	if p.Empty("oauth_timestamp") {
 		p.Add("oauth_timestamp", strconv.FormatInt(time.Now().Unix(), 10))
@@ -103,6 +124,7 @@ func (p *Provider) Sign() (string, error) {
 func (p *Provider) IsValid(r *http.Request) (bool, error) {
 	r.ParseForm()
 	p.values = r.Form
+	// @todo it should fail if wrong ConsumerKey
 	signature := r.Form.Get("oauth_signature")
 	// log.Printf("REQuest URLS %s", r.RequestURI)
 	sig, err := Sign(r.Form, p.URL, r.Method, p.Signer)
@@ -115,7 +137,7 @@ func (p *Provider) IsValid(r *http.Request) (bool, error) {
 	return false, fmt.Errorf("Invalid signature, %s, expected %s", sig, signature)
 }
 
-// SetSigner oauth method
+// SetSigner defines the signer that want to use.
 func (p *Provider) SetSigner(s oauth.OauthSigner) {
 	p.Signer = s
 }

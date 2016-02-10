@@ -51,7 +51,7 @@ func TestCreateRequest(t *testing.T) {
 		Form:   p.Params(),
 	}
 
-	pp := Default("asdf", "http://urltest.com/")
+	pp := NewProvider("asdf", "http://urltest.com/")
 	ok, err := pp.IsValid(r)
 	if err != nil {
 		t.Errorf("Error parsing request %s", err)
