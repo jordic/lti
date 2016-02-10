@@ -29,7 +29,9 @@ func (p *Provider) IsValid() bool {
 	return true
 }
 
-// Sign a lti request
+// Sign a lti request using HMAC containing a u, url, a http method,
+// and a secret. ts is a tokenSecret field from the oauth spec,
+// that in this case must be empty.
 func Sign(form url.Values, u, method, secret, ts string) (string, error) {
 
 	str, err := getBaseString(method, u, form)

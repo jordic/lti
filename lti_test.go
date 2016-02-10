@@ -6,6 +6,53 @@ import (
 	"testing"
 )
 
+func TestSignData2(t *testing.T) {
+	form := url.Values{}
+	form.Add("oauth_version", "1.0")
+	form.Add("oauth_timestamp", "145379781y9")
+	form.Add("oauth_nonce", "a6e69e5d34b9ff0b140c71942bc8615yy2")
+	form.Add("oauth_consumer_key", "speakApps")
+	form.Add("custom_aws_region", "ec2.eu-west-1.amazonaws.com")
+	form.Add("resource_link_id", "1086")
+	form.Add("resource_link_title", "Aws Amazon")
+	form.Add("resource_link_description", "Aws Amazon ")
+	form.Add("user_id", "2")
+	form.Add("custom_username", "admin")
+	form.Add("lis_person_sourcedid", "speakApps:admin")
+	form.Add("roles", "Instructor,urn:lti:sysrole:ims/lis/Administrator")
+	form.Add("context_id", "2")
+	form.Add("context_label", "SAC101")
+	form.Add("context_title", "SpeakApps Course Test")
+	form.Add("launch_presentation_locale", "ca")
+	form.Add("lis_person_nam_given", "Admin")
+	form.Add("lis_person_name_family", "SpeakApps")
+	form.Add("lis_person_name_full", "Admin SpeakApps")
+	form.Add("lis_person_contact_email_primary", "speakapps@uoc.edu")
+	form.Add("ext_lms", "moodle-2")
+	form.Add("tool_consumer_info_product_family_code", "moodle")
+	form.Add("tool_consumer_info_version", "2014051200.09")
+	form.Add("oauth_callback", "about:blank")
+	form.Add("ext_submit", "Press to submit")
+	form.Add("lti_version", "LTI-1p0")
+	form.Add("lti_message_type", "basic-lti-launch-request")
+	form.Add("tool_consumer_instance_guid", "moodle.speakapps.org")
+	form.Add("launch_presentation_return_url", "http://moodle.speakapps.org/mod/lti/return.php?course=2&amp;launch_container=4&amp;instanceid=1086&amp;sesskey=r3B3skhlho")
+	form.Add("oauth_signature_method", "HMAC-SHA1")
+
+	log.Printf("Encode %s", form.Encode())
+
+	s, err := Sign(form, "http://54.246.81.79/gestioaws",
+		"post", "speakApps2011*", "")
+	if err != nil {
+		t.Errorf("Can't sign %s", err)
+	}
+
+	if s != "b4VwGe2fTJGiy5J7QqbK/neuRuo=" {
+		t.Errorf("Wrong signature %s", s)
+	}
+
+}
+
 func TestSign(t *testing.T) {
 
 	vals := GenerateForm()
