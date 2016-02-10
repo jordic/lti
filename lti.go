@@ -22,6 +22,7 @@ import (
 const (
 	OAuthVersion = "1.0"
 	SigHMAC      = "HMAC-SHA1"
+	Version      = "0.1"
 )
 
 // Provider is an app, that can consume LTI messages
@@ -36,13 +37,14 @@ type Provider struct {
 }
 
 // Default is a default provider
-func Default(secret string) *Provider {
+func Default(secret, urlSrv string) *Provider {
 	sig := oauth.GetHMACSigner(secret, "")
 	return &Provider{
 		Secret: secret,
 		Method: "POST",
 		values: url.Values{},
 		Signer: sig,
+		URL:    urlSrv,
 	}
 }
 
@@ -99,12 +101,11 @@ func (p *Provider) Sign() (string, error) {
 // IsValid returns if lti request is valid, currently only checks
 // if signature is correct
 func (p *Provider) IsValid(r *http.Request) (bool, error) {
-	if p.values == nil {
-		r.ParseForm()
-		p.values = r.Form
-	}
+	r.ParseForm()
+	p.values = r.Form
 	signature := r.Form.Get("oauth_signature")
-	sig, err := Sign(r.Form, r.URL.String(), r.Method, p.Signer)
+	// log.Printf("REQuest URLS %s", r.RequestURI)
+	sig, err := Sign(r.Form, p.URL, r.Method, p.Signer)
 	if err != nil {
 		return false, err
 	}
@@ -127,6 +128,7 @@ func Sign(form url.Values, u, method string, firm oauth.OauthSigner) (string, er
 	if err != nil {
 		return "", err
 	}
+	// log.Printf("Base string: %s", str)
 	sig, err := firm.GetSignature(str)
 	if err != nil {
 		return "", err
