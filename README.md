@@ -13,6 +13,6 @@ Consumer
 http://www.imsglobal.org/activity/learning-tools-interoperability
 
 
-[See Example](tree/master/cmd/main.go)
+[See Example](cmd/main.go)
 
 
