@@ -2,6 +2,7 @@ package lti
 
 import (
 	"log"
+	"net/http"
 	"net/url"
 	"testing"
 
@@ -13,7 +14,7 @@ func TestCreateRequest(t *testing.T) {
 
 	p := &Provider{
 		Secret:      "asdf",
-		URL:         "https://urltest.com",
+		URL:         "http://urltest.com/",
 		ConsumerKey: "1234",
 		Method:      "post",
 	}
@@ -35,6 +36,28 @@ func TestCreateRequest(t *testing.T) {
 	if p.Get("oauth_signature") != sig {
 		t.Errorf("Request should be signed, %s", p.Get("oauth_signature"))
 		log.Printf("%#v", p.values)
+	}
+
+	if p.Get("oauth_signature_method") != SigHMAC {
+		t.Errorf("Signature method should be HMAC")
+	}
+
+	u, _ := url.Parse("http://urltest.com/")
+
+	r := &http.Request{
+		Method: "POST",
+		URL:    u,
+		Body:   nil,
+		Form:   p.Params(),
+	}
+
+	pp := Default("asdf")
+	ok, err := pp.IsValid(r)
+	if err != nil {
+		t.Errorf("Error parsing request %s", err)
+	}
+	if ok != true {
+		t.Errorf("Request should be valid")
 	}
 
 }

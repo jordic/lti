@@ -8,6 +8,7 @@ package lti
 import (
 	"crypto/rand"
 	"encoding/binary"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -83,6 +84,9 @@ func (p *Provider) Sign() (string, error) {
 	if p.Empty("oauth_nonce") {
 		p.Add("oauth_nonce", nonce())
 	}
+	if p.Empty("oauth_signature_method") {
+		p.Add("oauth_signature_method", p.Signer.GetMethod())
+	}
 	p.Add("oauth_consumer_key", p.ConsumerKey)
 
 	signature, err := Sign(p.values, p.URL, p.Method, p.Signer)
@@ -107,7 +111,7 @@ func (p *Provider) IsValid(r *http.Request) (bool, error) {
 	if sig == signature {
 		return true, nil
 	}
-	return false, nil
+	return false, fmt.Errorf("Invalid signature, %s, expected %s", sig, signature)
 }
 
 // SetSigner oauth method
