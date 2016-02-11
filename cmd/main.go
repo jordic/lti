@@ -35,6 +35,7 @@ func ltiHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p := lti.NewProvider(*secret, "http://localhost:5001/")
+	p.ConsumerKey = *consumer
 
 	ok, err := p.IsValid(r)
 	if ok == false {

@@ -31,15 +31,21 @@ const (
 
 // Provider is an app, that can consume LTI messages,
 // also a provider could be used, to construct messages and sign them
-// p := lti.NewProvider("secret", "http://url.com")
-// p.Add("param_name", "vale").
-// Add("other_param", "param2")
 //
-// sig, err := p.Sign()
+//  p := lti.NewProvider("secret", "http://url.com")
+//  p.Add("param_name", "vale").
+//    Add("other_param", "param2")
+//
+//  sig, err := p.Sign()
+//
 // will sign, the request, and add the needed fields to the
 // Provider.values > Can access it throught p.Params()
 // It also can be used to Verify and handle, incoming LTI requests.
-// p.IsValid(request)
+//
+//  p.IsValid(requesto)
+//
+// A Provider also holds a internal params url.Values, that can
+// be accessed via Get, or Add.
 type Provider struct {
 	Secret      string
 	URL         string
@@ -65,7 +71,12 @@ func NewProvider(secret, urlSrv string) *Provider {
 
 // HasRole checks if a LTI request, has a provided role
 func (p *Provider) HasRole(role string) bool {
-	return true
+	ro := strings.Split(p.Get("roles"), ",")
+	roles := strings.Join(ro, " ") + " "
+	if strings.Contains(roles, role+" ") {
+		return true
+	}
+	return false
 }
 
 // Get a value from the Params map in provider
@@ -76,6 +87,12 @@ func (p *Provider) Get(k string) string {
 // Params returns the map of values stored on the LTI request
 func (p *Provider) Params() url.Values {
 	return p.values
+}
+
+// SetParams for a provider
+func (p *Provider) SetParams(v url.Values) *Provider {
+	p.values = v
+	return p
 }
 
 // Add a new param to a LTI request
@@ -125,6 +142,11 @@ func (p *Provider) IsValid(r *http.Request) (bool, error) {
 	r.ParseForm()
 	p.values = r.Form
 	// @todo it should fail if wrong ConsumerKey
+	ckey := r.Form.Get("oauth_consumer_key")
+	if ckey != p.ConsumerKey {
+		return false, fmt.Errorf("Invalid consumer key provided")
+	}
+	// @todo should check current signer and error if not valid
 	signature := r.Form.Get("oauth_signature")
 	// log.Printf("REQuest URLS %s", r.RequestURI)
 	sig, err := Sign(r.Form, p.URL, r.Method, p.Signer)

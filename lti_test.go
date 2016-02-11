@@ -15,7 +15,7 @@ func TestCreateRequest(t *testing.T) {
 	p := &Provider{
 		Secret:      "asdf",
 		URL:         "http://urltest.com/",
-		ConsumerKey: "1234",
+		ConsumerKey: "12345",
 		Method:      "post",
 	}
 
@@ -52,6 +52,7 @@ func TestCreateRequest(t *testing.T) {
 	}
 
 	pp := NewProvider("asdf", "http://urltest.com/")
+	pp.ConsumerKey = "12345"
 	ok, err := pp.IsValid(r)
 	if err != nil {
 		t.Errorf("Error parsing request %s", err)
@@ -60,6 +61,36 @@ func TestCreateRequest(t *testing.T) {
 		t.Errorf("Request should be valid")
 	}
 
+}
+
+func TestHasRole(t *testing.T) {
+	p := NewProvider("asdf", "http://localhost")
+	p.Add("roles", "Instructor,Admin")
+	if p.HasRole("Admin") != true {
+		t.Error("Provicer should respond to true, with role admin")
+	}
+	if p.HasRole("Teacher") == true {
+		t.Error("Role should fail because is not defined")
+	}
+	if p.HasRole("Inst") == true {
+		t.Error("Should fail with substrings")
+	}
+}
+
+func TestFailWrongConsumerKey(t *testing.T) {
+	p := NewProvider("asdf", "http://urltest.com/")
+	p.ConsumerKey = "Invalid"
+
+	r := &http.Request{
+		Method: "POST",
+		Body:   nil,
+		Form:   p.Params(),
+	}
+
+	ok, _ := p.IsValid(r)
+	if ok == true {
+		t.Error("Should fail because incorrect consumer key")
+	}
 }
 
 func TestSign(t *testing.T) {
