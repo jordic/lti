@@ -111,7 +111,6 @@ func TestCurrentSigner(t *testing.T) {
 	if ok == true {
 		t.Error("Should fail because incorrect consumer key")
 	}
-	log.Print(err.Error())
 	if !strings.Contains(err.Error(), "wrong signature") {
 		t.Error("Should contain error in consumer type")
 	}

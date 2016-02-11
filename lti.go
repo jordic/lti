@@ -147,7 +147,7 @@ func (p *Provider) IsValid(r *http.Request) (bool, error) {
 		return false, fmt.Errorf("Invalid consumer key provided")
 	}
 
-	if r.Form.Get("oauth_signature_method") != SigHMAC {
+	if r.Form.Get("oauth_signature_method") != p.Signer.GetMethod() {
 		return false, fmt.Errorf("wrong signature method %s",
 			r.Form.Get("oauth_signature_method"))
 	}
