@@ -141,12 +141,16 @@ func (p *Provider) Sign() (string, error) {
 func (p *Provider) IsValid(r *http.Request) (bool, error) {
 	r.ParseForm()
 	p.values = r.Form
-	// @todo it should fail if wrong ConsumerKey
+
 	ckey := r.Form.Get("oauth_consumer_key")
 	if ckey != p.ConsumerKey {
 		return false, fmt.Errorf("Invalid consumer key provided")
 	}
-	// @todo should check current signer and error if not valid
+
+	if r.Form.Get("oauth_signature_method") != SigHMAC {
+		return false, fmt.Errorf("wrong signature method %s",
+			r.Form.Get("oauth_signature_method"))
+	}
 	signature := r.Form.Get("oauth_signature")
 	// log.Printf("REQuest URLS %s", r.RequestURI)
 	sig, err := Sign(r.Form, p.URL, r.Method, p.Signer)

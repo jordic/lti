@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/jordic/lti/oauth"
@@ -91,6 +92,30 @@ func TestFailWrongConsumerKey(t *testing.T) {
 	if ok == true {
 		t.Error("Should fail because incorrect consumer key")
 	}
+}
+
+func TestCurrentSigner(t *testing.T) {
+	p := NewProvider("asdf", "http://urltest.com/")
+	p.ConsumerKey = "12345"
+
+	form := GenerateForm()
+	form.Set("oauth_signature_method", "PLAINTEXT")
+
+	r := &http.Request{
+		Method: "POST",
+		Body:   nil,
+		Form:   form,
+	}
+
+	ok, err := p.IsValid(r)
+	if ok == true {
+		t.Error("Should fail because incorrect consumer key")
+	}
+	log.Print(err.Error())
+	if !strings.Contains(err.Error(), "wrong signature") {
+		t.Error("Should contain error in consumer type")
+	}
+
 }
 
 func TestSign(t *testing.T) {
